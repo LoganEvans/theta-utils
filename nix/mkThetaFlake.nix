@@ -21,11 +21,18 @@ flake-utils.lib.eachDefaultSystem (
 
     treefmtEval = treefmt-nix.lib.evalModule pkgs treefmtModule;
 
-    drv = pkgs.callPackage packageFn {
+    fnArgs = builtins.functionArgs (import packageFn);
+    candidateArgs = {
       src = self;
       theta-utils = theta-utils-self.packages.${system}.default;
+      theta-debug-utils = theta-utils-self.packages.${system}.default;
       theta-cmake = theta-utils-self.packages.${system}.cmake;
     };
+    filteredArgs = builtins.intersectAttrs fnArgs candidateArgs // {
+      src = self;
+    };
+
+    drv = pkgs.callPackage packageFn filteredArgs;
   in
   {
     packages = {
