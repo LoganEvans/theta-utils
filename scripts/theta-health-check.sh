@@ -22,6 +22,20 @@ echo "=================================================================="
 echo "Running theta health check for: ${REPO_NAME} ($(pwd))"
 echo "=================================================================="
 
+# 0. Verify single shared nixpkgs pin against ../theta-utils/flake.lock
+if [[ -f "flake.lock" ]] && [[ -f "../theta-utils/flake.lock" ]] && [[ "${REPO_NAME}" != "theta-utils" ]]; then
+  EXPECTED_REV="$(grep -A 6 '"nixpkgs": {' ../theta-utils/flake.lock | grep '"rev":' | head -n 1 | sed -E 's/.*"rev":[[:space:]]*"([^"]+)".*/\1/')"
+  ACTUAL_REVS="$(grep -A 6 '"nixpkgs": {' flake.lock | grep '"rev":' | sed -E 's/.*"rev":[[:space:]]*"([^"]+)".*/\1/' | sort -u)"
+  for rev in ${ACTUAL_REVS}; do
+    if [[ "${rev}" != "${EXPECTED_REV}" ]]; then
+      echo "ERROR: ${REPO_NAME}/flake.lock uses nixpkgs rev ${rev}, expected ${EXPECTED_REV} from theta-utils/flake.lock!" >&2
+      echo "       Ensure flake.nix sets 'nixpkgs.follows = \"theta-utils/nixpkgs\";'" >&2
+      exit 1
+    fi
+  done
+  echo "[0/7] Verified nixpkgs pin matches theta-utils (${EXPECTED_REV:0:12}) ..."
+fi
+
 # 1. Header pragma once & file banner check
 if [[ -d "include/theta" ]]; then
   echo "[1/7] Checking public headers under include/theta/ ..."
