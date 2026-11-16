@@ -1,37 +1,42 @@
+# FILENAME: package.nix
 {
   clangStdenv,
   cmake,
+  pkg-config,
   cpptrace,
   fmt,
   gtest,
   src,
+  cmakeOnly ? false,
 }:
-let
-in
 clangStdenv.mkDerivation {
   inherit src;
-  name = "debug-utils";
+  pname = if cmakeOnly then "theta-cmake" else "theta-utils";
+  version = "0.1.0";
 
-  outputs = [
-    "out"
-  ];
+  outputs = [ "out" ];
 
-  buildInputs = [
-    gtest
-  ];
+  buildInputs = if cmakeOnly then [ ] else [ gtest ];
 
-  propagatedBuildInputs = [
-    cpptrace
-    fmt
-  ];
+  propagatedBuildInputs =
+    if cmakeOnly then
+      [ ]
+    else
+      [
+        cpptrace
+        fmt
+      ];
 
   nativeBuildInputs = [
     cmake
+    pkg-config
   ];
+
+  cmakeFlags = if cmakeOnly then [ "-DTHETA_UTILS_CMAKE_ONLY=ON" ] else [ ];
 
   dontStrip = true;
   cmakeBuildType = "RelWithDebInfo";
-  separateDebugInfo = true;
+  separateDebugInfo = !cmakeOnly;
 
   doCheck = false;
 }

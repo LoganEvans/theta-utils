@@ -1,43 +1,60 @@
-cmake_minimum_required(VERSION 3.31)
-project(debug-utils VERSION 0.1)
-include(CTest)
+# FILENAME: CMakeLists.txt
 
-set(CMAKE_C_COMPILER "clang")
-set(CMAKE_CXX_COMPILER "clang++")
+cmake_minimum_required(VERSION 3.25)
+project(theta-utils VERSION 0.1.0 LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/ThetaBuild.cmake")
 
-add_compile_options(-fdiagnostics-color=always -Wno-unused-command-line-argument)
-add_link_options(-Wno-unused-command-line-argument)
+option(THETA_UTILS_CMAKE_ONLY "Install only CMake/linter/health-check utilities without C++ runtime deps" OFF)
 
-add_compile_options(-Wno-unused-command-line-argument)
-add_link_options(-Wno-unused-command-line-argument)
+install(
+    PROGRAMS "${CMAKE_CURRENT_SOURCE_DIR}/scripts/theta-health-check.sh"
+    DESTINATION "${CMAKE_INSTALL_BINDIR}"
+    RENAME "theta-health-check"
+)
+
+if(THETA_UTILS_CMAKE_ONLY)
+  add_library(theta-cmake INTERFACE)
+  add_library(theta::theta-cmake ALIAS theta-cmake)
+  theta_install_package(
+      TARGETS theta-cmake
+      DESCRIPTION "Shared CMake & health-check utilities for the theta C++ suite"
+      EXTRA_CMAKE_INCLUDE "ThetaBuild.cmake"
+      EXTRA_CMAKE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/cmake/ThetaBuild.cmake"
+  )
+  return()
+endif()
+
+theta_enable_strict_warnings()
+theta_add_header_check()
 
 find_package(fmt CONFIG REQUIRED)
 
 add_library(debug-utils SHARED src/debug.cc)
+add_library(theta::debug-utils ALIAS debug-utils)
 target_include_directories(
-  debug-utils PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+    debug-utils PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
 target_link_libraries(debug-utils PUBLIC fmt::fmt)
 
 add_library(stacktrace-signal-handlers SHARED src/stacktrace-signal-handlers.cc)
+add_library(theta::stacktrace-signal-handlers ALIAS stacktrace-signal-handlers)
 target_include_directories(
-  stacktrace-signal-handlers
-  PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+    stacktrace-signal-handlers PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
 target_link_libraries(stacktrace-signal-handlers PUBLIC cpptrace fmt::fmt)
 
-install(
-  TARGETS debug-utils stacktrace-signal-handlers
-  EXPORT ${PROJECT_NAME}
-  DESTINATION $ENV{out}/lib)
-
-install(
-  EXPORT ${PROJECT_NAME}
-  DESTINATION $ENV{out}/lib/cmake/${PROJECT_NAME}
-  FILE ${PROJECT_NAME}-config.cmake
-  NAMESPACE theta::)
+theta_install_package(
+    TARGETS debug-utils stacktrace-signal-handlers
+    DESCRIPTION "Debug tracing, stacktrace signal handlers, and CMake build utilities for theta"
+    EXTRA_CMAKE_INCLUDE "ThetaBuild.cmake"
+    EXTRA_CMAKE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/cmake/ThetaBuild.cmake"
+)
 
 if(BUILD_TESTING)
   add_subdirectory(test)
-endif(BUILD_TESTING)
+endif()
