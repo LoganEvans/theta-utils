@@ -80,7 +80,7 @@ else
 fi
 
 # 6. Formal verification check (Lean 4)
-if [[ -d "verification" ]] && compgen -G "verification/*.lean" >/dev/null; then
+if [[ -d "verification" ]] && find verification -maxdepth 1 -name '*.lean' | grep -q .; then
   echo "[6/7] Auditing Lean 4 formal proofs in verification/ ..."
   for lean_file in verification/*.lean; do
     if grep -En '\b(sorry|admit|axiom)\b' "${lean_file}" | grep -v '^[0-9]*:[[:space:]]*--'; then
@@ -107,13 +107,13 @@ if [[ "${SKIP_NIX_BUILD}" -eq 0 ]] && [[ -f "flake.nix" ]] && command -v nix >/d
     exit 1
   fi
 
-  if ! compgen -G "${OUT_LINK}/lib/cmake/*/*-config.cmake" >/dev/null; then
+  if [[ ! -d "${OUT_LINK}/lib/cmake" ]] || ! find "${OUT_LINK}/lib/cmake" -name '*-config.cmake' | grep -q .; then
     echo "ERROR: nix build output missing CMake config in ${OUT_LINK}/lib/cmake/" >&2
     rm -f "${OUT_LINK}"
     exit 1
   fi
 
-  if ! compgen -G "${OUT_LINK}/lib/pkgconfig/*.pc" >/dev/null; then
+  if [[ ! -d "${OUT_LINK}/lib/pkgconfig" ]] || ! find "${OUT_LINK}/lib/pkgconfig" -name '*.pc' | grep -q .; then
     echo "ERROR: nix build output missing pkg-config (.pc) in ${OUT_LINK}/lib/pkgconfig/" >&2
     rm -f "${OUT_LINK}"
     exit 1
