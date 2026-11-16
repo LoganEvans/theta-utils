@@ -17,6 +17,8 @@ if(THETA_UTILS_CMAKE_ONLY)
   add_library(theta-cmake INTERFACE)
   add_library(theta::theta-cmake ALIAS theta-cmake)
   theta_install_package(
+      PACKAGE_NAME theta-cmake
+      NO_HEADERS
       TARGETS theta-cmake
       DESCRIPTION "Shared CMake & health-check utilities for the theta C++ suite"
       EXTRA_CMAKE_INCLUDE "ThetaBuild.cmake"

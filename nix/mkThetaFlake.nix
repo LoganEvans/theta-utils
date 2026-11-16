@@ -58,9 +58,9 @@ flake-utils.lib.eachDefaultSystem (
       nativeBuildInputs = (oldAttrs.nativeBuildInputs or [ ]) ++ [
         pkgs.ninja
         pkgs.gdb
-        pkgs.linuxPackages.perf
+        pkgs.perf
         pkgs.cmake-format
-        pkgs.nixfmt-rfc-style
+        pkgs.nixfmt
         pkgs.shellcheck
         pkgs.shfmt
         pkgs.ruff

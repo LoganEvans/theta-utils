@@ -55,7 +55,7 @@ function(theta_add_header_check)
   endif()
 
   set(HEADER_CHECK_SRCS "")
-  set( idx 0 )
+  set(idx 0)
   foreach(hdr IN LISTS THETA_PUBLIC_HEADERS)
     file(RELATIVE_PATH rel_hdr "${CMAKE_CURRENT_SOURCE_DIR}/include" "${hdr}")
     set(gen_cc "${CMAKE_CURRENT_BINARY_DIR}/theta_header_check/header_${idx}.cc")
@@ -75,14 +75,14 @@ endfunction()
 #    Produces:
 #      - $out/include/theta/...
 #      - $out/lib/lib... (if compiled targets)
-#      - $out/lib/cmake/<project>/<project>-config.cmake
-#      - $out/lib/cmake/<project>/<project>-config-version.cmake
-#      - $out/lib/cmake/<project>/<project>-targets.cmake (NAMESPACE theta::)
-#      - $out/lib/pkgconfig/<project>.pc
+#      - $out/lib/cmake/<pkg>/<pkg>-config.cmake
+#      - $out/lib/cmake/<pkg>/<pkg>-config-version.cmake
+#      - $out/lib/cmake/<pkg>/<pkg>-targets.cmake (NAMESPACE theta::)
+#      - $out/lib/pkgconfig/<pkg>.pc
 # ------------------------------------------------------------------------------
 function(theta_install_package)
-  set(options "")
-  set(oneValueArgs DESCRIPTION EXTRA_CMAKE_INCLUDE)
+  set(options NO_HEADERS)
+  set(oneValueArgs PACKAGE_NAME DESCRIPTION EXTRA_CMAKE_INCLUDE)
   set(multiValueArgs TARGETS EXTRA_CMAKE_FILES)
   cmake_parse_arguments(THETA_PKG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -90,8 +90,14 @@ function(theta_install_package)
     message(FATAL_ERROR "theta_install_package requires TARGETS")
   endif()
 
+  if(THETA_PKG_PACKAGE_NAME)
+    set(PKG_NAME "${THETA_PKG_PACKAGE_NAME}")
+  else()
+    set(PKG_NAME "${PROJECT_NAME}")
+  endif()
+
   if(NOT THETA_PKG_DESCRIPTION)
-    set(THETA_PKG_DESCRIPTION "${PROJECT_NAME} library from the theta C++ suite")
+    set(THETA_PKG_DESCRIPTION "${PKG_NAME} library from the theta C++ suite")
   endif()
 
   if(NOT PROJECT_VERSION)
@@ -103,46 +109,46 @@ function(theta_install_package)
   # Install targets
   install(
       TARGETS ${THETA_PKG_TARGETS}
-      EXPORT ${PROJECT_NAME}Targets
-      LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-      INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+      EXPORT ${PKG_NAME}Targets
+      LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+      ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+      RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+      INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
   )
 
   # Install public headers if include/ exists
-  if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include")
+  if(NOT THETA_PKG_NO_HEADERS AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include")
     install(
         DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
         DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
     )
   endif()
 
-  set(CMAKE_CONFIG_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
+  set(CMAKE_CONFIG_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/${PKG_NAME}")
 
   # Install exported targets under theta:: namespace
   install(
-      EXPORT ${PROJECT_NAME}Targets
-      FILE ${PROJECT_NAME}-targets.cmake
+      EXPORT ${PKG_NAME}Targets
+      FILE ${PKG_NAME}-targets.cmake
       NAMESPACE theta::
       DESTINATION "${CMAKE_CONFIG_INSTALL_DIR}"
   )
 
-  # Generate and install <project>-config.cmake
+  # Generate and install <pkg>-config.cmake
   set(EXTRA_INCLUDE_LINE "")
   if(THETA_PKG_EXTRA_CMAKE_INCLUDE)
     set(EXTRA_INCLUDE_LINE "include(\"\${CMAKE_CURRENT_LIST_DIR}/${THETA_PKG_EXTRA_CMAKE_INCLUDE}\")")
   endif()
 
-  set(CONFIG_FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake")
+  set(CONFIG_FILE "${CMAKE_CURRENT_BINARY_DIR}/${PKG_NAME}-config.cmake")
   file(WRITE "${CONFIG_FILE}"
 "include(CMakeFindDependencyMacro)
-include(\"\${CMAKE_CURRENT_LIST_DIR}/${PROJECT_NAME}-targets.cmake\")
+include(\"\${CMAKE_CURRENT_LIST_DIR}/${PKG_NAME}-targets.cmake\")
 ${EXTRA_INCLUDE_LINE}
 ")
 
-  # Generate and install <project>-config-version.cmake
-  set(VERSION_FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake")
+  # Generate and install <pkg>-config-version.cmake
+  set(VERSION_FILE "${CMAKE_CURRENT_BINARY_DIR}/${PKG_NAME}-config-version.cmake")
   write_basic_package_version_file(
       "${VERSION_FILE}"
       VERSION "${PKG_VERSION}"
@@ -155,7 +161,7 @@ ${EXTRA_INCLUDE_LINE}
       DESTINATION "${CMAKE_CONFIG_INSTALL_DIR}"
   )
 
-  # Generate and install pkg-config (.pc) file
+  # Generate and install pkg-config (.pc) file using CMAKE_INSTALL_FULL_*
   set(PC_LIBS "")
   foreach(tgt IN LISTS THETA_PKG_TARGETS)
     get_target_property(tgt_type ${tgt} TYPE)
@@ -164,14 +170,14 @@ ${EXTRA_INCLUDE_LINE}
     endif()
   endforeach()
 
-  set(PC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc")
+  set(PC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${PKG_NAME}.pc")
   file(WRITE "${PC_FILE}"
-"prefix=\${pcfiledir}/../..
+"prefix=${CMAKE_INSTALL_PREFIX}
 exec_prefix=\${prefix}
-libdir=\${prefix}/${CMAKE_INSTALL_LIBDIR}
-includedir=\${prefix}/${CMAKE_INSTALL_INCLUDEDIR}
+libdir=${CMAKE_INSTALL_FULL_LIBDIR}
+includedir=${CMAKE_INSTALL_FULL_INCLUDEDIR}
 
-Name: ${PROJECT_NAME}
+Name: ${PKG_NAME}
 Description: ${THETA_PKG_DESCRIPTION}
 Version: ${PKG_VERSION}
 Cflags: -I\${includedir}
