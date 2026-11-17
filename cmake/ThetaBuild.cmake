@@ -35,10 +35,70 @@ function(theta_enable_strict_warnings)
       -Wundef
       -fzero-call-used-regs=skip
       -fdiagnostics-color=always
-      -Wno-unused-command-line-argument
-  )
+      -Wno-unused-command-line-argument)
   add_link_options(-Wno-unused-command-line-argument)
+
+  theta_configure_optimization()
 endfunction()
+
+# ------------------------------------------------------------------------------
+# 1b. ThinLTO & 2-Stage Context-Sensitive PGO (IR PGO + CS-PGO) Configuration
+# ------------------------------------------------------------------------------
+macro(theta_configure_optimization)
+  option(THETA_ENABLE_LTO "Enable Clang ThinLTO for Release builds" OFF)
+  option(THETA_PGO_GENERATE
+         "Enable Stage-1 LLVM IR PGO instrumentation (-fprofile-generate)" OFF)
+  option(
+    THETA_CSPGO_GENERATE
+    "Enable Stage-2 LLVM Context-Sensitive PGO (-fcs-profile-generate)" OFF)
+  set(THETA_PGO_PROFILE
+      ""
+      CACHE FILEPATH "Path to merged .profdata profile for -fprofile-use")
+  set(THETA_PGO_PROFILE_LIST
+      ""
+      CACHE FILEPATH "Optional Clang -fprofile-list= allowlist file")
+
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    set(_theta_pgo_list "${THETA_PGO_PROFILE_LIST}")
+    if("${_theta_pgo_list}" STREQUAL ""
+       AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/pgo-profile.list")
+      set(_theta_pgo_list "${CMAKE_CURRENT_SOURCE_DIR}/pgo-profile.list")
+    endif()
+    if(NOT "${_theta_pgo_list}" STREQUAL ""
+       AND (THETA_PGO_PROFILE OR THETA_PGO_GENERATE OR THETA_CSPGO_GENERATE))
+      add_compile_options(
+        $<$<COMPILE_LANGUAGE:CXX>:-fprofile-list=${_theta_pgo_list}>)
+    endif()
+
+    if(THETA_ENABLE_LTO AND CMAKE_BUILD_TYPE MATCHES "^(Release|RelWithDebInfo)$")
+      add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-flto=thin>)
+      add_link_options(-flto=thin)
+      find_program(THETA_LLD_LINKER ld.lld)
+      if(THETA_LLD_LINKER)
+        add_link_options(-fuse-ld=lld)
+      endif()
+    endif()
+
+    if(THETA_PGO_PROFILE)
+      add_compile_options(
+        $<$<COMPILE_LANGUAGE:CXX>:-fprofile-use=${THETA_PGO_PROFILE}>
+        $<$<COMPILE_LANGUAGE:CXX>:-Wno-profile-instr-out-of-date>
+        $<$<COMPILE_LANGUAGE:CXX>:-Wno-profile-instr-unprofiled>
+        $<$<COMPILE_LANGUAGE:CXX>:-Wno-backend-plugin>)
+      add_link_options(-fprofile-use=${THETA_PGO_PROFILE})
+    endif()
+
+    if(THETA_PGO_GENERATE)
+      add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fprofile-generate>)
+      add_link_options(-fprofile-generate)
+    endif()
+
+    if(THETA_CSPGO_GENERATE)
+      add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fcs-profile-generate>)
+      add_link_options(-fcs-profile-generate)
+    endif()
+  endif()
+endmacro()
 
 # ------------------------------------------------------------------------------
 # 2. Self-contained public header verification
