@@ -17,6 +17,11 @@ TEST(ArchTraitsTest, ZeroOneMacrosAreMutuallyConsistentWithConstexprTraits) {
   static_assert(kIsAarch64 == (THETA_ARCH_AARCH64 != 0));
   static_assert(kIsLinux == (THETA_OS_LINUX != 0));
   static_assert(kHasLinuxRseq == (THETA_HAS_LINUX_RSEQ != 0));
+  static_assert((THETA_ARCH_X86_BMI == 0) || (THETA_ARCH_X86_BMI == 1));
+  static_assert((THETA_ARCH_X86_BMI2 == 0) || (THETA_ARCH_X86_BMI2 == 1));
+  static_assert(kHasBmi == (THETA_ARCH_X86_BMI != 0));
+  static_assert(kHasBmi2 == (THETA_ARCH_X86_BMI2 != 0));
+  static_assert(!kHasBmi2 || kIsX86_64);
   static_assert(kCacheLineBytes == 64U);
 
   EXPECT_EQ(kCacheLineBytes, 64U);

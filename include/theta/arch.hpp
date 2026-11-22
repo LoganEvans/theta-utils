@@ -105,6 +105,18 @@
 #define THETA_SIMD_AVX512VBMI2 0
 #endif
 
+#if THETA_ARCH_X86_64 && defined(__BMI__)
+#define THETA_ARCH_X86_BMI 1
+#else
+#define THETA_ARCH_X86_BMI 0
+#endif
+
+#if THETA_ARCH_X86_64 && defined(__BMI2__)
+#define THETA_ARCH_X86_BMI2 1
+#else
+#define THETA_ARCH_X86_BMI2 0
+#endif
+
 // AArch64 SIMD & ISA feature macros
 #if THETA_ARCH_AARCH64 && defined(__ARM_NEON)
 #define THETA_SIMD_NEON 1
@@ -167,6 +179,20 @@
 #define THETA_COLD_NOINLINE __attribute__((noinline, cold)) inline
 #endif
 
+#ifndef THETA_MUSTTAIL
+#if defined(__has_cpp_attribute)
+#if defined(__clang__) && __has_cpp_attribute(clang::musttail)
+#define THETA_MUSTTAIL [[clang::musttail]]
+#elif defined(__GNUC__) && __has_cpp_attribute(gnu::musttail)
+#define THETA_MUSTTAIL [[gnu::musttail]]
+#else
+#define THETA_MUSTTAIL
+#endif
+#else
+#define THETA_MUSTTAIL
+#endif
+#endif
+
 #ifndef THETA_DISABLE_UNROLL
 #if defined(__clang__)
 #define THETA_DISABLE_UNROLL _Pragma("clang loop unroll(disable)")
@@ -202,6 +228,8 @@ inline constexpr bool kHasAvx512Bw = (THETA_SIMD_AVX512BW != 0);
 inline constexpr bool kHasAvx512Vl = (THETA_SIMD_AVX512VL != 0);
 inline constexpr bool kHasAvx512Vbmi = (THETA_SIMD_AVX512VBMI != 0);
 inline constexpr bool kHasAvx512Vbmi2 = (THETA_SIMD_AVX512VBMI2 != 0);
+inline constexpr bool kHasBmi = (THETA_ARCH_X86_BMI != 0);
+inline constexpr bool kHasBmi2 = (THETA_ARCH_X86_BMI2 != 0);
 
 inline constexpr bool kHasNeon = (THETA_SIMD_NEON != 0);
 inline constexpr bool kHasSve = (THETA_SIMD_SVE != 0);
