@@ -1,6 +1,6 @@
 # FILENAME: package.nix
 {
-  clangStdenv,
+  llvmPackages_23,
   cmake,
   pkg-config,
   cpptrace,
@@ -9,7 +9,7 @@
   src,
   cmakeOnly ? false,
 }:
-clangStdenv.mkDerivation {
+llvmPackages_23.stdenv.mkDerivation {
   inherit src;
   pname = if cmakeOnly then "theta-cmake" else "theta-utils";
   version = "0.1.0";

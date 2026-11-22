@@ -58,7 +58,7 @@
             pkgs.ninja
             pkgs.gdb
             pkgs.perf
-            pkgs.llvmPackages_19.clang-tools
+            pkgs.llvmPackages_23.clang-tools
             pkgs.cmake-format
             pkgs.nixfmt
             pkgs.shellcheck

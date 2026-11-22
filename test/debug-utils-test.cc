@@ -1,10 +1,16 @@
+// FILENAME: test/debug-utils-test.cc
+
 #include <fmt/format.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include "theta/arch.hpp"
 #include "theta/debug-utils/debug.h"
 
 using ::testing::Eq;
+
+static_assert(theta::arch::kCacheLineBytes == 64U);
+static_assert(theta::arch::kIsX86_64 || theta::arch::kIsAarch64);
 
 namespace theta::debug_utils {
 

@@ -26,15 +26,15 @@ class Debug {
 
   template <typename... Args>
   Debug(const char *format, Args... args)
-      : msg_{fmt::format(fmt::runtime(format), args...)},
-        indent_{get_indent(/*enter=*/true)} {
+      : indent_{get_indent(/*enter=*/true)},
+        msg_{fmt::format(fmt::runtime(format), args...)} {
     print_entry('>');
   }
 
   Debug(std::function<void()> func) : indent_(0), func_(func) {}
 
   Debug(std::source_location loc = std::source_location::current())
-      : loc_{loc}, indent_{get_indent(/*enter=*/true)} {
+      : indent_{get_indent(/*enter=*/true)}, loc_{loc} {
     print_entry('>');
   }
 

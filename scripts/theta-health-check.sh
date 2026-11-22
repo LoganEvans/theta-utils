@@ -9,9 +9,9 @@ set -euo pipefail
 
 REPO_DIR="${1:-.}"
 SKIP_NIX_BUILD=0
-if [[ "${2:-}" == "--skip-nix-build" ]] || [[ "${1:-}" == "--skip-nix-build" ]]; then
+if [[ ${2:-} == "--skip-nix-build" ]] || [[ ${1:-} == "--skip-nix-build" ]]; then
   SKIP_NIX_BUILD=1
-  if [[ "${1:-}" == "--skip-nix-build" ]]; then
+  if [[ ${1:-} == "--skip-nix-build" ]]; then
     REPO_DIR="."
   fi
 fi
@@ -23,11 +23,11 @@ echo "Running theta health check for: ${REPO_NAME} ($(pwd))"
 echo "=================================================================="
 
 # 0. Verify single shared nixpkgs pin against ../theta-utils/flake.lock
-if [[ -f "flake.lock" ]] && [[ -f "../theta-utils/flake.lock" ]] && [[ "${REPO_NAME}" != "theta-utils" ]]; then
+if [[ -f "flake.lock" ]] && [[ -f "../theta-utils/flake.lock" ]] && [[ ${REPO_NAME} != "theta-utils" ]]; then
   EXPECTED_REV="$(grep -A 6 '"nixpkgs": {' ../theta-utils/flake.lock | grep '"rev":' | head -n 1 | sed -E 's/.*"rev":[[:space:]]*"([^"]+)".*/\1/')"
   ACTUAL_REVS="$(grep -A 6 '"nixpkgs": {' flake.lock | grep '"rev":' | sed -E 's/.*"rev":[[:space:]]*"([^"]+)".*/\1/' | sort -u)"
   for rev in ${ACTUAL_REVS}; do
-    if [[ "${rev}" != "${EXPECTED_REV}" ]]; then
+    if [[ ${rev} != "${EXPECTED_REV}" ]]; then
       echo "ERROR: ${REPO_NAME}/flake.lock uses nixpkgs rev ${rev}, expected ${EXPECTED_REV} from theta-utils/flake.lock!" >&2
       echo "       Ensure flake.nix sets 'nixpkgs.follows = \"theta-utils/nixpkgs\";'" >&2
       exit 1
@@ -110,7 +110,7 @@ else
 fi
 
 # 7. nix build & install artifact check (CMake config + pkg-config .pc + headers)
-if [[ "${SKIP_NIX_BUILD}" -eq 0 ]] && [[ -f "flake.nix" ]] && command -v nix >/dev/null 2>&1; then
+if [[ ${SKIP_NIX_BUILD} -eq 0 ]] && [[ -f "flake.nix" ]] && command -v nix >/dev/null 2>&1; then
   echo "[7/7] Running 'nix build' and verifying standard install outputs ..."
   OUT_LINK="$(mktemp -u "${TMPDIR:-/tmp}/theta-nix-result-${REPO_NAME}.XXXXXX")"
   nix build -o "${OUT_LINK}"

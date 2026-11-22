@@ -37,8 +37,8 @@ flake-utils.lib.eachDefaultSystem (
     drv = pkgs.callPackage packageFn filteredArgs;
 
     llvmTools = [
-      pkgs.llvmPackages_19.bintools
-      pkgs.llvmPackages_19.llvm
+      pkgs.llvmPackages_23.bintools
+      pkgs.llvmPackages_23.llvm
     ];
 
     pgoFilterArg =
@@ -166,8 +166,8 @@ flake-utils.lib.eachDefaultSystem (
         pkgs.ninja
         pkgs.gdb
         pkgs.perf
-        pkgs.llvmPackages_19.bintools
-        pkgs.llvmPackages_19.llvm
+        pkgs.llvmPackages_23.bintools
+        pkgs.llvmPackages_23.llvm
         pkgs.cmake-format
         pkgs.nixfmt
         pkgs.shellcheck
