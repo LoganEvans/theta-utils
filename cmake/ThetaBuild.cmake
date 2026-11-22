@@ -6,6 +6,27 @@ include(CTest)
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
+# Throttle concurrent Ninja link jobs (e.g. ThinLTO ld.lld +
+# GoogleBenchmark/Abseil) so low-RAM hosts (15-16 GiB) never swap-thrash while
+# keeping C++ compilation saturated across physical cores.
+if(CMAKE_GENERATOR MATCHES "^Ninja")
+  set(THETA_LINK_POOL_JOBS
+      "2"
+      CACHE
+        STRING
+        "Maximum concurrent Ninja link jobs to cap ThinLTO/debug memory spikes")
+  get_property(_theta_job_pools GLOBAL PROPERTY JOB_POOLS)
+  if(NOT _theta_job_pools MATCHES "(^|;)theta_link_pool=")
+    set_property(GLOBAL APPEND
+                 PROPERTY JOB_POOLS "theta_link_pool=${THETA_LINK_POOL_JOBS}")
+  endif()
+  if(NOT DEFINED CMAKE_JOB_POOL_LINK)
+    set(CMAKE_JOB_POOL_LINK
+        "theta_link_pool"
+        CACHE STRING "Default Ninja job pool for linking")
+  endif()
+endif()
+
 # Automatically expose `<theta/arch.hpp>` from either an installed `theta-cmake`
 # prefix (`$out/lib/cmake/theta-cmake/../../../include`) or an in-tree sibling
 # checkout (`../theta-utils/cmake/../include`).
