@@ -12,6 +12,7 @@
   treefmtModule ? ../treefmt.nix,
   pgoTrainFilter ? null,
   pgoTrainMinTime ? "100x",
+  extraPackageArgs ? { },
 }:
 flake-utils.lib.eachDefaultSystem (
   system:
@@ -27,9 +28,9 @@ flake-utils.lib.eachDefaultSystem (
     candidateArgs = {
       src = self;
       theta-utils = theta-utils-self.packages.${system}.default;
-      theta-debug-utils = theta-utils-self.packages.${system}.default;
       theta-cmake = theta-utils-self.packages.${system}.cmake;
-    };
+    }
+    // extraPackageArgs;
     filteredArgs = builtins.intersectAttrs fnArgs candidateArgs // {
       src = self;
     };

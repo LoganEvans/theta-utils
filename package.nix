@@ -3,8 +3,6 @@
   llvmPackages_23,
   cmake,
   pkg-config,
-  cpptrace,
-  fmt,
   gtest,
   src,
   cmakeOnly ? false,
@@ -18,14 +16,7 @@ llvmPackages_23.stdenv.mkDerivation {
 
   buildInputs = if cmakeOnly then [ ] else [ gtest ];
 
-  propagatedBuildInputs =
-    if cmakeOnly then
-      [ ]
-    else
-      [
-        cpptrace
-        fmt
-      ];
+  propagatedBuildInputs = [ ];
 
   nativeBuildInputs = [
     cmake
@@ -35,8 +26,8 @@ llvmPackages_23.stdenv.mkDerivation {
   cmakeFlags = if cmakeOnly then [ "-DTHETA_UTILS_CMAKE_ONLY=ON" ] else [ ];
 
   dontStrip = true;
-  cmakeBuildType = "RelWithDebInfo";
-  separateDebugInfo = !cmakeOnly;
+  cmakeBuildType = "Release";
+  separateDebugInfo = false;
 
   doCheck = false;
 }

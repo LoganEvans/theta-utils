@@ -1,20 +1,21 @@
 <!-- FILENAME: README.md -->
 
-# `theta-utils` — Shared Nix/CMake Infrastructure, Linters, Health Checks & Debug Utilities
+# `theta-utils` — Shared `<theta/arch.hpp>` Traits, Nix/CMake Infrastructure, Linters & Health Checks
 
-Central utility repository for the `theta` C++ suite, providing both **zero-runtime-dependency build/lint/packaging helpers** and **optional C++ runtime debug utilities**.
+Central zero-runtime-dependency infrastructure repository for the `theta` C++23 suite.
 
-## 1. Zero-Overhead Build & Packaging Helpers (`packages.<system>.cmake` & `lib.mkThetaFlake`)
-Downstream `theta-*` repositories can consume `theta-utils.packages.${system}.cmake` in `nativeBuildInputs` (build-time only, adding **zero** runtime dependencies to downstream users):
-- **`cmake/ThetaBuild.cmake`**:
-  - `theta_enable_strict_warnings()`: Enables C++23, `-Wall -Wextra -Wpedantic -Werror -Wthread-safety -Wconversion -Wsign-conversion -Wshadow ...` and `compile_commands.json` generation.
-  - `theta_add_header_check()`: Verifies every public header under `include/theta/` compiles standalone when included first in a translation unit.
-  - `theta_install_package(TARGETS ...)`: Automatically installs headers, libraries, `lib/cmake/<pkg>/<pkg>-config.cmake` (`NAMESPACE theta::`), and `lib/pkgconfig/<pkg>.pc`.
-- **`nix/mkThetaFlake.nix`**:
-  - Wires `packages.{default,test,benchmark}`, `devShells.default` (with `clang-tools`, `cmake-format`, `nixfmt`, `shellcheck`, `shfmt`, `ruff`, `ninja`, `gdb`, `perf`), `formatter` (`nix fmt`), and `checks` (`nix flake check`).
-- **`scripts/theta-health-check.sh`** (`theta-health-check`):
-  - Runs the 7-stage repository health check (header hygiene, `treefmt` linters, `-Werror` Ninja build + `theta_header_check`, `ctest`, benchmark smoke run, Lean 4 proof audit, and `nix build` output validation for headers, CMake config, and `pkg-config`).
+*(Note: C++ scoped debug tracing, `WelfordStats`, Calling Context Trees, and `stacktrace-signal-handlers` live in the standalone `theta-debug-utils` repository under `<theta/debug_utils.hpp>` and `<theta/debug.hpp>`.)*
 
-## 2. Optional C++ Debug Utilities (`packages.<system>.default`)
-- `theta::debug-utils` (`include/theta/debug-utils/debug.h`): Scoped indentation-aware debug tracer.
-- `theta::stacktrace-signal-handlers`: Automatic `cpptrace` stacktrace printer on fatal signals.
+## Components (`packages.<system>.cmake`, `packages.<system>.default`, & `lib.mkThetaFlake`)
+
+1. **`include/theta/arch.hpp`**:
+   - Layer 1 `-Wundef`-safe `0`/`1` preprocessor macros (`THETA_ARCH_X86_64`, `THETA_ARCH_AARCH64`, `THETA_OS_LINUX`, `THETA_HAS_LINUX_RSEQ`, `THETA_SIMD_*`, `THETA_TSAN_ENABLED`, `THETA_ASAN_ENABLED`).
+   - Layer 2 `namespace theta::arch` `constexpr` capability traits (`kIsX86_64`, `kIsAarch64`, `kCacheLineBytes`, `kHasRedZoneStlfPause`, `kHasEvexHighRegs`, `kAvx512DoublePumped`, `kHasFastFsrm`, `cpu_relax()`).
+2. **`cmake/ThetaBuild.cmake`**:
+   - `theta_enable_strict_warnings()`: Enables C++23, strict `-Werror` warning flags, ThinLTO/CS-PGO options, `theta_link_pool=2`, and `compile_commands.json` generation.
+   - `theta_add_header_check()`: Verifies every header under `include/theta/` compiles standalone when included first in an isolated translation unit.
+   - `theta_install_package(TARGETS ...)`: Installs headers, libraries, `lib/cmake/<pkg>/<pkg>-config.cmake` (`NAMESPACE theta::`), and `lib/pkgconfig/<pkg>.pc`.
+3. **`nix/mkThetaFlake.nix`**:
+   - Wires `packages.{default,test,benchmark,benchmark-lto,pgo-profdata,benchmark-pgo}`, `devShells.default`, `formatter` (`nix fmt`), and `checks` (`nix flake check`), plus optional `extraPackageArgs` for sibling `theta-*` dependencies.
+4. **`scripts/theta-health-check.sh`** (`theta-health-check`):
+   - Runs the 7-stage repository health check (shared `nixpkgs` pin check, header hygiene, `treefmt` linters, `-Werror` Ninja build + `theta_header_check`, `ctest`, benchmark smoke run, Lean 4 proof audit, and `nix build` + `pkg-config --validate`).

@@ -1,6 +1,6 @@
 # FILENAME: flake.nix
 {
-  description = "theta-utils: Shared Nix/CMake build helpers, linters, health checks, and C++ debug utilities";
+  description = "theta-utils: Shared <theta/arch.hpp> capability traits, Nix/CMake build helpers, linters, and health checks";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs";
@@ -40,10 +40,9 @@
       {
         packages = rec {
           theta-utils = theta-utils-drv;
-          debug-utils = theta-utils-drv;
           cmake = theta-cmake-drv;
 
-          test = theta-utils-drv.overrideAttrs (attrs: {
+          test = theta-utils-drv.overrideAttrs (_attrs: {
             cmakeBuildType = "Debug";
             doCheck = true;
           });
@@ -72,6 +71,10 @@
 
         checks = {
           formatting = treefmtEval.config.build.check self;
+          test = theta-utils-drv.overrideAttrs (_attrs: {
+            cmakeBuildType = "Debug";
+            doCheck = true;
+          });
         };
       }
     ))
